@@ -188,7 +188,7 @@ char *get_secret(const char *service) {
 // returns a heap allocated byte array which contains the base32 decoded
 // string, str, and then sets res_len to length of the byte array. adapted
 // from https://stackoverflow.com/questions/641361/base32-decoding
-unsigned char *decodeBase32(const char *str, size_t
+unsigned char *decode_base32(const char *str, size_t
 	*res_len) {
 	size_t str_len = strlen(str);
 	*res_len = (5*str_len)/8;
@@ -227,7 +227,7 @@ unsigned char *decodeBase32(const char *str, size_t
 // default values specified by the RFCs
 int hotp_value(const char *secret, unsigned long long count) {
 	size_t data_len;
-	unsigned char *data = decodeBase32(secret, &data_len);
+	unsigned char *data = decode_base32(secret, &data_len);
 	if (data == NULL) {
 		fprintf(stderr, "error while decoding base32-encoded secret"
 			"\n");
