@@ -55,9 +55,16 @@ FILE *openr_config(long *len) {
 		return NULL;
 	}
 
+	char magic[26];
+	fgets(magic, 25, config);
+	if (strcmp(magic, "DO NOT REMOVE THIS LINE\n") != 0) {
+		fprintf(stderr, "error: secrets file is missing magic\n");
+		return NULL;
+	}
+
 	fseek(config, 0, SEEK_END);
-	*len = ftell(config);
-	rewind(config);
+	*len = ftell(config) - 24;
+	fseek(config, 24, SEEK_SET);
 	if (*len == 0) {
 		fprintf(stderr, "error: no services have been configured\n");
 		fclose(config);
@@ -124,6 +131,25 @@ int add_service(const char *str) {
 	free(filename);
 	if (config == NULL) {
 		perror("fopen");
+		return 1;
+	}
+
+	fseek(config, 0, SEEK_END);
+	size_t file_len = ftell(config);
+	if (file_len == 0) {
+		int err = fputs("DO NOT REMOVE THIS LINE\n", config);
+		if (err == EOF) {
+			perror("fputs");
+			return 1;
+		}
+	}
+	rewind(config);
+
+	char magic[26];
+	fgets(magic, 25, config);
+	if (strcmp(magic, "DO NOT REMOVE THIS LINE\n") !=
+		0) {
+		fprintf(stderr, "error: secrets file is missing magic\n");
 		return 1;
 	}
 

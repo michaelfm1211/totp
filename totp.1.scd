@@ -35,7 +35,10 @@ by default as per RFC 6238 reccomendations.
 	Print the usage of the program.
 *-s* _secrets\_file_
 	Use a different file as your secrets file. totp will use 
-	_secrets\_file_ instead of your default totp_secrets file.
+	_secrets\_file_ instead of your default totp_secrets file. totp will 
+	ensure that this file is valid before reading it by checking that the
+	file starts with a magic line. The magic line should be "DO NOT DELETE
+	THIS LINE" followed by a new line character (0x0a).
 *-a* _service_:_secret_
 	Add/configure a new service that *totp* will keep track of. _service_
 	will be the name you interact with when you ask *totp* to generate the
