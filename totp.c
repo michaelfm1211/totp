@@ -9,18 +9,23 @@
 #include <openssl/hmac.h>
 #include "colors.h"
 
+char *secrets_path = NULL;
+
 enum flags {
 	RAW_OUT = 0x1
 };
 
 // print usage to stderr
 void usage() {
-	fprintf(stderr, "usage: totp [-rlh] [-a service:secret] [-d service] "
-		"[services...]\n");
+	fprintf(stderr, "usage: totp [-rlh] [-s secrets_file]"
+		"[-a service:secret] [-d service] [services...]\n");
 }
 
 // returns path of the config file. caller must free the result
 char *config_path() {
+	if (secrets_path != NULL)
+		return strdup(secrets_path);
+
 	char *xdg_config_env = getenv("XDG_CONFIG_HOME");
 	char *str = NULL;
 	if (xdg_config_env != NULL) {
@@ -30,8 +35,7 @@ char *config_path() {
 	} else {
 		char *home_env = getenv("HOME");
 		str = malloc(strlen(home_env) + 22);
-		strcpy(str, home_env);
-		strcat(str, "/.config");
+		sprintf(str, "%s/.config", home_env);
 	}
 
 	strcat(str, "/totp_secrets");
@@ -258,10 +262,13 @@ int main(int argc, char *argv[]) {
 
 	int flags = 0;
 	char ch;
-	while ((ch = getopt(argc, argv, ":ra:d:lh")) != -1) {
+	while ((ch = getopt(argc, argv, ":rlhs:a:d:")) != -1) {
 		switch (ch) {
 		case 'r':
 			flags |= RAW_OUT;
+			break;
+		case 's':
+			secrets_path = optarg;
 			break;
 		case 'a':
 			return add_service(optarg);
