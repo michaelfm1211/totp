@@ -98,7 +98,9 @@ int delete_service(const char *service) {
 	}
 
 	rewind(config);
-	if (fputs(buf, config) == EOF) {
+	int res1 = fputs("DO NOT REMOVE THIS LINE\n", config);
+	int res2 = fputs(buf, config);
+	if (res1 == EOF || res2 == EOF) {
 		perror("fputs");
 		return 1;
 	}
