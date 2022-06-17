@@ -329,9 +329,9 @@ int main(int argc, char *argv[]) {
 			return 1;
 
 		if (flags & RAW_OUT) {
-			printf("%d\n", res);
+			printf("%*d\n", 6, res);
 		} else {
-			printf("%s\t\t" SGR_BOLD "%d\n" SGR_RESET, argv[optind], res);
+			printf("%s\t\t" SGR_BOLD "%06d\n" SGR_RESET, argv[optind], res);
 		}
 	}
 
