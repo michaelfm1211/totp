@@ -6,7 +6,7 @@ see the man page, or read the scdoc source in `totp.1.scd`. totp also uses
 ### Building
 totp depends on openssl. If you want to build the man page too, you will need
 [scdoc](https://sr.ht/~sircmpwn/scdoc/). Just run `make` or `make install` to
-compileor compile and install the program.
+compile or compile and install the program.
 
 ### Warning
 totp stores your secret keys in plaintext. In the future this will probably
