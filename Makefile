@@ -23,7 +23,8 @@ debug: $(SRCS)
 
 .PHONY: docs
 docs:
-	scdoc < totp.1.scd > totp.1
+	@scdoc < totp.1.scd > totp.1
+	@echo "[SCDOC] $@"
 
 .PHONY: install
 install: all
@@ -36,4 +37,4 @@ install: all
 
 .PHONY: clean
 clean:
-	@rm -rf $(OBJS) totp debug debug.dSYM
+	rm -rf $(OBJS) totp debug debug.dSYM
