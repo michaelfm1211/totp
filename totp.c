@@ -17,7 +17,7 @@ enum flags {
 
 // print usage to stderr
 void usage() {
-	fprintf(stderr, "usage: totp [-rlh] [-s secrets_file]"
+	fprintf(stderr, "usage: totp [-rlh] [-s secrets_file] "
 		"[-a service:secret] [-d service] [services...]\n");
 }
 

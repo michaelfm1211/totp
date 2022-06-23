@@ -37,4 +37,4 @@ install: all
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJS) totp debug debug.dSYM
+	rm -rf $(OBJS) totp debug debug.dSYM totp.1
