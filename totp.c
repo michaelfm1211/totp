@@ -96,10 +96,12 @@ int delete_service(const char *service) {
 			buflen += linelen;
 		}
 	}
+	free(line);
 
 	rewind(config);
 	int res1 = fputs("DO NOT REMOVE THIS LINE\n", config);
 	int res2 = fputs(buf, config);
+	free(buf);
 	if (res1 == EOF || res2 == EOF) {
 		perror("fputs");
 		return 1;
@@ -188,6 +190,7 @@ int list_services() {
 		char *service = strtok_r(line, ":", &secret);
 		printf(SGR_BOLD"%s"SGR_RESET"\t\t%s", service, secret);
 	}
+	free(line);
 
 	return 0;
 }
@@ -208,9 +211,11 @@ char *get_secret(const char *service) {
 		if (strcmp(service, entry) == 0) {
 			char *str = strdup(secret);
 			*(strchr(str, '\n')) = 0;
+			free(line);
 			return str;
 		}
 	}
+	free(line);
 
 	fprintf(stderr, "error: service '%s' has not been configured\n",
 		service);
