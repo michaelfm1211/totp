@@ -3,6 +3,14 @@ totp is a a CLI TOTP tool that aims to mimics Google Authenticator. For usage,
 see the man page, or read the scdoc source in `totp.1.scd`. totp also uses
 [colors.h](https://github.com/michaelfm1211/colors.h) to make stuff look good.
 
+#### Extras
+- [MAC ONLY] To get a top bar icon next to your wifi, control center, etc.,
+you can use [xbar](https://github.com/matryer/xbar) and
+[these nifty scripts](https://gist.github.com/michaelfm1211/32336940e1d27c4b2a44c9e3f665f26c)
+
+If you make something useful/cool with totp, make a pull request to advertise
+it here.
+
 ### Building
 totp depends on openssl. If you want to build the man page too, you will need
 [scdoc](https://sr.ht/~sircmpwn/scdoc/). Just run `make` or `make install` to
