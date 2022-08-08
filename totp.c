@@ -9,11 +9,52 @@
 #include <openssl/hmac.h>
 #include "colors.h"
 
-char *secrets_path = NULL;
+#define ERROR_NO_SERVICES "error: no services have been configured\n"
+
+// macros to iterate the config file line-by-line. used heavily
+#define ITER_CONFIG \
+	char *line = NULL; \
+	size_t linecap = 0; \
+	ssize_t linelen; \
+	int linenum = 0; \
+	while ((linelen = getline(&line, &linecap, config)) > 0) {
+#define ITER_CONFIG_END \
+		linenum++; \
+	} \
+	free(line);
+
+long config_len;
+FILE *config;
 
 enum flags {
 	RAW_OUT = 0x1
 };
+
+FILE *config_open(long *len) {
+	char *path = NULL;
+	char *xdg_config_env = getenv("XDG_CONFIG_HOME");
+	if (xdg_config_env) {
+		path = calloc(strlen(xdg_config_env)+14, 1);
+		sprintf(path, "%s/totp_secrets", xdg_config_env);
+	} else {
+		char *home_env = getenv("HOME");
+		if (!home_env) {
+			fprintf(stderr, "error: $HOME is not set\n");
+			exit(1);
+		}
+		path = calloc(strlen(home_env)+22, 1);
+		sprintf(path, "%s/.config/totp_secrets", home_env);
+	}
+
+	FILE *file = fopen(path, "r+");
+	free(path);
+
+	fseek(file, 0, SEEK_END);
+	*len = ftell(file);
+	rewind(file);
+
+	return file;
+}
 
 // print usage to stderr
 void usage() {
@@ -21,88 +62,41 @@ void usage() {
 		"[-a service:secret] [-d service] [services...]\n");
 }
 
-// returns path of the config file. caller must free the result
-char *config_path() {
-	if (secrets_path != NULL)
-		return strdup(secrets_path);
-
-	char *xdg_config_env = getenv("XDG_CONFIG_HOME");
-	char *str = NULL;
-	if (xdg_config_env != NULL) {
-		str = malloc(strlen(xdg_config_env) + 14);
-		strcpy(str, xdg_config_env);
-		return str;
-	} else {
-		char *home_env = getenv("HOME");
-		str = malloc(strlen(home_env) + 22);
-		sprintf(str, "%s/.config", home_env);
-	}
-
-	strcat(str, "/totp_secrets");
-	return str;
-}
-
-// open the config file for reading, and do error handling
-FILE *openr_config(long *len) {
-	char *filename = config_path();
-	FILE *config = fopen(filename, "r+");
-	free(filename);
-	if (config == NULL && errno == ENOENT) {
-		fprintf(stderr, "error: no services have been configured\n");
-		return NULL;
-	} else if (config == NULL) {
-		perror("fopen");
-		return NULL;
-	}
-
-	char magic[26];
-	fgets(magic, 25, config);
-	if (strcmp(magic, "DO NOT REMOVE THIS LINE\n") != 0) {
-		fprintf(stderr, "error: secrets file is missing magic\n");
-		return NULL;
-	}
-
-	fseek(config, 0, SEEK_END);
-	*len = ftell(config) - 24;
-	fseek(config, 24, SEEK_SET);
-	if (*len == 0) {
-		fprintf(stderr, "error: no services have been configured\n");
-		fclose(config);
-		return NULL;
-	}
-
-	return config;
-}
-
 // remove a service from the config file
 int delete_service(const char *service) {
-	long len = 0;
-	FILE *config = openr_config(&len);
-	if (config == NULL)
+	if (config_len == 0) {
+		fprintf(stderr, ERROR_NO_SERVICES);
 		return 1;
+	}
 
-	char *buf = calloc(len + 1, 1);
+	char *buf = calloc(config_len+1, 1);
 	size_t buflen = 0;
 
-	char *line = NULL;
-	size_t linecap = 0;
-	ssize_t linelen;
-	while ((linelen = getline(&line, &linecap, config)) > 0) {
+	ITER_CONFIG
 		char entry[strlen(line) + 1];
 		strcpy(entry, line);
-		*(strchr(entry, ':')) = 0;
+
+		char *colon = strchr(entry, ':');
+		if (!colon) {
+			fprintf(stderr,
+					"error: syntax error in secrets file on line %d\n", 
+					linenum);
+			free(buf);
+			free(line);
+			return 1;
+		}
+		*colon = '\0';
+
 		if (strcmp(entry, service) != 0) {
 			strcpy(buf+buflen, line);
 			buflen += linelen;
 		}
-	}
-	free(line);
+	ITER_CONFIG_END
 
 	rewind(config);
-	int res1 = fputs("DO NOT REMOVE THIS LINE\n", config);
-	int res2 = fputs(buf, config);
+	int res = fputs(buf, config);
 	free(buf);
-	if (res1 == EOF || res2 == EOF) {
+	if (res == EOF) {
 		perror("fputs");
 		return 1;
 	}
@@ -130,33 +124,6 @@ int add_service(const char *str) {
 		return 1;
 	}
 
-	char *filename = config_path();
-	FILE *config = fopen(filename, "a+");
-	free(filename);
-	if (config == NULL) {
-		perror("fopen");
-		return 1;
-	}
-
-	fseek(config, 0, SEEK_END);
-	size_t file_len = ftell(config);
-	if (file_len == 0) {
-		int err = fputs("DO NOT REMOVE THIS LINE\n", config);
-		if (err == EOF) {
-			perror("fputs");
-			return 1;
-		}
-	}
-	rewind(config);
-
-	char magic[26];
-	fgets(magic, 25, config);
-	if (strcmp(magic, "DO NOT REMOVE THIS LINE\n") !=
-		0) {
-		fprintf(stderr, "error: secrets file is missing magic\n");
-		return 1;
-	}
-
 	char *tmp = secret;
 	while (*tmp != '\0') {
 		*tmp = toupper(*tmp);
@@ -176,21 +143,25 @@ int add_service(const char *str) {
 // list all services and their base32-encoded secrets stored in the config
 // file
 int list_services() {
-	long len = 0;
-	FILE *config = openr_config(&len);
-	if (config == NULL)
+	if (config_len == 0) {
+		fprintf(stderr, ERROR_NO_SERVICES);
 		return 1;
+	}
 
 	printf(SGR_BOLD SGR_UNDER "Service\t\tSecret (do not share)\n"
 		SGR_RESET);
-	char *line = NULL;
-	size_t linecap = 0;
-	while (getline(&line, &linecap, config) > 0) {
+	ITER_CONFIG
+		if (strchr(line, ':') == NULL) {
+			fprintf(stderr, SGR_RESET
+					"error: syntax error in secrets file on line %d\n", 
+					linenum);
+			return 1;
+		}
+
 		char *secret = NULL;
 		char *service = strtok_r(line, ":", &secret);
 		printf(SGR_BOLD"%s"SGR_RESET"\t\t%s", service, secret);
-	}
-	free(line);
+	ITER_CONFIG_END
 
 	return 0;
 }
@@ -198,14 +169,12 @@ int list_services() {
 // return the base32-encoded secret for a service in the config file as a
 // heap allocated string
 char *get_secret(const char *service) {
-	long len = 0;
-	FILE *config = openr_config(&len);
-	if (config == NULL)
+	if (config_len == 0) {
+		fprintf(stderr, ERROR_NO_SERVICES);
 		return NULL;
+	}
 
-	char *line = NULL;
-	size_t linecap = 0;
-	while (getline(&line, &linecap, config) > 0) {
+	ITER_CONFIG
 		char *secret = NULL;
 		char *entry = strtok_r(line, ":", &secret);
 		if (strcmp(service, entry) == 0) {
@@ -214,8 +183,7 @@ char *get_secret(const char *service) {
 			free(line);
 			return str;
 		}
-	}
-	free(line);
+	ITER_CONFIG_END
 
 	fprintf(stderr, "error: service '%s' has not been configured\n",
 		service);
@@ -293,6 +261,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	config = config_open(&config_len);
+
 	int flags = 0;
 	char ch;
 	while ((ch = getopt(argc, argv, ":rlhs:a:d:")) != -1) {
@@ -301,7 +271,8 @@ int main(int argc, char *argv[]) {
 			flags |= RAW_OUT;
 			break;
 		case 's':
-			secrets_path = optarg;
+			fclose(config);
+			config = config_open(&config_len);
 			break;
 		case 'a':
 			return add_service(optarg);
