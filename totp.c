@@ -10,8 +10,6 @@
 #include "colors.h"
 #include "util.h"
 
-#define ERROR_NO_SERVICES "error: no services have been configured\n"
-
 // macros to iterate the config file line-by-line. used heavily
 #define ITER_CONFIG \
 	char *line = NULL; \
@@ -83,15 +81,9 @@ int delete_service(const char *service) {
 // "service:secret", where secret is base32-encoded
 int add_service(const char *str) {
 	char *secret = strchr(str, ':')+1;
-	if (secret == NULL) {
+	if (secret == (char *)1) {
 		fprintf(stderr, "error: argument must be in format \"service"
 			":secret\"\n");
-		return 1;
-	} else if (*(secret+1) == '\0') {
-		fprintf(stderr, "error: secret cannot be empty\n");
-		return 1;
-	} else if (strchr(secret+1, ':') != NULL) {
-		fprintf(stderr, "error: secret cannot contain a comma\n");
 		return 1;
 	}
 
@@ -101,6 +93,12 @@ int add_service(const char *str) {
 		tmp++;
 	}
 
+	if (!validate_base32(secret)) {
+		fprintf(stderr, "error: secret is not valid base32\n");
+		return 1;
+	}
+
+	fseek(config, 0, SEEK_END);
 	int res1 = fputs(str, config);
 	int res2 = fputs("\n", config);
 	if (res1 == EOF || res2 == EOF) {
