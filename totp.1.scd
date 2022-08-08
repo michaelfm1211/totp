@@ -6,7 +6,7 @@ totp - Google Authenicator-like functionality from the command line
 
 # SYNOPYSIS
 
-*totp* [*-rlh*] [*-s* secrets_file] [*-a* service:secret] [*-d* service] [services...]
+*totp* [*-rlh*] [*-c* secrets_file] [*-a* service:secret] [*-d* service] [services...]
 
 # DESCRIPTION
 
@@ -33,7 +33,7 @@ by default as per RFC 6238 reccomendations.
 	secrets to another program.
 *-h*
 	Print the usage of the program.
-*-s* _secrets\_file_
+*-c* _secrets\_file_
 	Use a different file as your secrets file. totp will use 
 	_secrets\_file_ instead of your default totp_secrets file. totp will 
 	ensure that this file is valid before reading it by checking that the

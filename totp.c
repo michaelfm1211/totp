@@ -27,7 +27,7 @@ FILE *config;
 
 // print usage to stderr
 void usage() {
-	fprintf(stderr, "usage: totp [-rlh] [-s secrets_file] "
+	fprintf(stderr, "usage: totp [-rlh] [-c secrets_file] "
 		"[-a service:secret] [-d service] [services...]\n");
 }
 
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 		case 'r':
 			flags |= RAW_OUT;
 			break;
-		case 's':
+		case 'c':
 			fclose(config);
 			config = config_open(&config_len);
 			break;
