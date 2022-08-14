@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 			return 1;
 
 		if (flags & RAW_OUT) {
-			printf("%*d\n", 6, res);
+			printf("%06d\n", res);
 		} else {
 			printf("%s\t\t" SGR_BOLD "%06d\n" SGR_RESET, argv[optind], res);
 		}
