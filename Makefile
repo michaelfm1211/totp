@@ -3,23 +3,23 @@ PREFIX = /usr/local
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
 
-CFLAGS += -Wall -Wextra
+CFLAGS += -Wall -Wextra -Werror
 LDFLAGS += -lcrypto
 
 all: CFLAGS += -c
 all: totp docs
 
 %.o: %.c
-	@$(CC) $(CFLAGS) $< -o $@
+	@$(CC) $< $(CFLAGS) -o $@
 	@echo "[CC] $@"
 
 totp: $(OBJS)
-	@$(CC) $(LDFLAGS) $^ -o $@
+	@$(CC) $^ $(LDFLAGS) -o $@
 	@echo "[LD] $@"
 
 debug: CFLAGS += -g -fsanitize=address
 debug: $(SRCS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $^ $(CFLAGS) $(LDFLAGS) -o $@
 
 .PHONY: docs
 docs:
