@@ -78,7 +78,7 @@ unsigned char *decode_base32(const char *str, size_t *res_len) {
 
 int hotp_value(const unsigned char *secret, size_t secret_len,
                unsigned long long count) {
-  unsigned long be_count = htonl(count);
+  unsigned long be_count = htonll(count);
 
   unsigned char *mac = NULL;
   unsigned int mac_len = -1;
