@@ -76,9 +76,23 @@ unsigned char *decode_base32(const char *str, size_t *res_len) {
   return res;
 }
 
+unsigned long long htonl64(unsigned long long in) {
+  unsigned long long out;
+  unsigned char *ptr = (unsigned char *)&out;
+  ptr[0] = in >> 56;
+  ptr[1] = in >> 48;
+  ptr[2] = in >> 40;
+  ptr[3] = in >> 32;
+  ptr[4] = in >> 24;
+  ptr[5] = in >> 16;
+  ptr[6] = in >> 8;
+  ptr[7] = in >> 0;
+  return out;
+}
+
 int hotp_value(const unsigned char *secret, size_t secret_len,
                unsigned long long count) {
-  unsigned long be_count = htonll(count);
+  unsigned long long be_count = htonl64(count);
 
   unsigned char *mac = NULL;
   unsigned int mac_len = -1;

@@ -3,7 +3,7 @@ PREFIX = /usr/local
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
 
-CFLAGS += -Wall -Wextra -Werror -Wno-unused-but-set-variable -pedantic -std=c99
+CFLAGS += -Wall -Wextra -Werror -Wno-unused-but-set-variable -pedantic
 LDFLAGS += -lcrypto
 
 all: CFLAGS += -c

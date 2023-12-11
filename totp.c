@@ -194,11 +194,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  unsigned long unix_time = time(NULL);
-  unsigned long count = unix_time / 30;
+  unsigned long long unix_time = time(NULL);
+  unsigned long long count = unix_time / 30;
 
   if (!(flags & RAW_OUT))
-    printf("Time Left: %lu\n", (count + 1) * 30 - unix_time);
+    printf("Time Left: %llu\n", (count + 1) * 30 - unix_time);
 
   for (; optind < argc; optind++) {
     char *secret = get_secret(argv[optind]);
