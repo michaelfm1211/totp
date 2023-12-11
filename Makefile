@@ -3,7 +3,7 @@ PREFIX = /usr/local
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
 
-CFLAGS += -Wall -Wextra -Werror
+CFLAGS += -Wall -Wextra -Werror -Wno-unused-but-set-variable -pedantic -std=c99
 LDFLAGS += -lcrypto
 
 all: CFLAGS += -c
@@ -17,7 +17,7 @@ totp: $(OBJS)
 	@$(CC) $^ $(LDFLAGS) -o $@
 	@echo "[LD] $@"
 
-debug: CFLAGS += -g -fsanitize=address
+debug: CFLAGS += -g -fsanitize=address -fsanitize=undefined
 debug: $(SRCS)
 	$(CC) $^ $(CFLAGS) $(LDFLAGS) -o $@
 

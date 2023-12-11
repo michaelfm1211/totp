@@ -1,5 +1,3 @@
-#include "colors.h"
-#include "util.h"
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
@@ -9,27 +7,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
+#include "colors.h"
+#include "util.h"
+
 // macros to iterate the config file line-by-line. used heavily
-#define ITER_CONFIG                                                            \
-  char *line = NULL;                                                           \
-  size_t linecap = 0;                                                          \
-  ssize_t linelen;                                                             \
-  int linenum = 0;                                                             \
+#define ITER_CONFIG   \
+  char *line = NULL;  \
+  size_t linecap = 0; \
+  ssize_t linelen;    \
+  int linenum = 0;    \
   while ((linelen = getline(&line, &linecap, config)) > 0) {
-#define ITER_CONFIG_END                                                        \
-  linenum++;                                                                   \
-  }                                                                            \
+#define ITER_CONFIG_END \
+  linenum++;            \
+  }                     \
   free(line);
 
 long config_len;
 FILE *config;
 
 // print usage to stderr
-void usage() {
-  fprintf(stderr, "usage: totp [-rlh] [-c secrets_file] "
-                  "[-a service:secret] [-d service] [services...]\n");
+void usage(void) {
+  fprintf(stderr,
+          "usage: totp [-rlh] [-c secrets_file] "
+          "[-a service:secret] [-d service] [services...]\n");
 }
 
 // remove a service from the config file
@@ -82,8 +85,9 @@ int delete_service(const char *service) {
 int add_service(const char *str) {
   char *secret = strchr(str, ':') + 1;
   if (secret == (char *)1) {
-    fprintf(stderr, "error: argument must be in format \"service"
-                    ":secret\"\n");
+    fprintf(stderr,
+            "error: argument must be in format \"service"
+            ":secret\"\n");
     return 1;
   }
 
@@ -111,7 +115,7 @@ int add_service(const char *str) {
 
 // list all services and their base32-encoded secrets stored in the config
 // file
-int list_services() {
+int list_services(void) {
   if (config_len == 0) {
     fprintf(stderr, ERROR_NO_SERVICES);
     return 1;
@@ -169,24 +173,24 @@ int main(int argc, char *argv[]) {
   char ch;
   while ((ch = getopt(argc, argv, ":rlhs:a:d:")) != -1) {
     switch (ch) {
-    case 'r':
-      flags |= RAW_OUT;
-      break;
-    case 'c':
-      fclose(config);
-      config = config_open(&config_len);
-      break;
-    case 'a':
-      return add_service(optarg);
-    case 'd':
-      return delete_service(optarg);
-    case 'l':
-      return list_services();
-    case 'h':
-    case ':':
-    case '?':
-      usage();
-      return 1;
+      case 'r':
+        flags |= RAW_OUT;
+        break;
+      case 'c':
+        fclose(config);
+        config = config_open(&config_len);
+        break;
+      case 'a':
+        return add_service(optarg);
+      case 'd':
+        return delete_service(optarg);
+      case 'l':
+        return list_services();
+      case 'h':
+      case ':':
+      case '?':
+        usage();
+        return 1;
     }
   }
 
@@ -198,16 +202,14 @@ int main(int argc, char *argv[]) {
 
   for (; optind < argc; optind++) {
     char *secret = get_secret(argv[optind]);
-    if (secret == NULL)
-      return 1;
+    if (secret == NULL) return 1;
 
     size_t data_len;
     unsigned char *data = decode_base32(secret, &data_len);
 
     int res = hotp_value(data, data_len, count);
     free(secret);
-    if (res == -1)
-      return 1;
+    if (res == -1) return 1;
 
     if (flags & RAW_OUT) {
       printf("%06d\n", res);
