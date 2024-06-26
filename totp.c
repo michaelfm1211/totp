@@ -1,6 +1,5 @@
 #include <arpa/inet.h>
 #include <ctype.h>
-#include <errno.h>
 #include <getopt.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -209,6 +208,7 @@ int main(int argc, char *argv[]) {
 
     int res = hotp_value(data, data_len, count);
     free(secret);
+    free(data);
     if (res == -1) return 1;
 
     if (flags & RAW_OUT) {

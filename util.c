@@ -11,16 +11,18 @@ FILE *config_open(long *len) {
   char *path = NULL;
   char *xdg_config_env = getenv("XDG_CONFIG_HOME");
   if (xdg_config_env) {
-    path = calloc(strlen(xdg_config_env) + 14, 1);
-    sprintf(path, "%s/totp_secrets", xdg_config_env);
+    size_t len_xdg_config_env = strlen(xdg_config_env);
+    path = calloc(len_xdg_config_env + 14, 1);
+    snprintf(path, len_xdg_config_env + 14, "%s/totp_secrets", xdg_config_env);
   } else {
     char *home_env = getenv("HOME");
     if (!home_env) {
       fprintf(stderr, "error: $HOME is not set\n");
       exit(1);
     }
-    path = calloc(strlen(home_env) + 22, 1);
-    sprintf(path, "%s/.config/totp_secrets", home_env);
+    size_t len_home_env = strlen(home_env);
+    path = calloc(len_home_env + 22, 1);
+    snprintf(path, len_home_env + 22, "%s/.config/totp_secrets", home_env);
   }
 
   FILE *file = fopen(path, "r+");
