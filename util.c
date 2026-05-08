@@ -26,6 +26,11 @@ FILE *config_open(long *len) {
   }
 
   FILE *file = fopen(path, "r+");
+  if (!file) {
+    fprintf(stderr, "Failed to open secrets file.\n");
+    free(path);
+    exit(1);
+  }
   free(path);
 
   fseek(file, 0, SEEK_END);
